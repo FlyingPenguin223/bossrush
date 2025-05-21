@@ -1,0 +1,3 @@
+: maps/map.tmj |> tiled2c %f %B > %o |> map.c
+: foreach *.c |> gcc -c %f -o %o |> builds/%B.o
+: builds/*.o |> gcc -lraylib %f -o %o |> thing
