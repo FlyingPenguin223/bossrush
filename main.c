@@ -1,7 +1,10 @@
-#include "tiled2c.h"
 #include <stdio.h>
 #include <raylib.h>
+#include <math.h>
 
+#include "bossrush.h"
+
+#include "tiled2c.h"
 #include "entity.h"
 
 #define WINDOW_WIDTH 1536
@@ -9,17 +12,15 @@
 
 extern const Tiled2cMap map;
 
-typedef struct {
-	float x;
-	float y;
-	float zoom;
-} Cam;
-
 Texture2D tileset;
 void load_textures();
 int tile_at(int x, int y);
 void draw_tile(Cam cam, int id, int x, int y);
 void draw_entity(Cam cam, Entity* thing);
+
+Vector2 get_mouse_pos_scaled();
+
+Cam camera;
 
 int main() {
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "boss rush!");
@@ -36,11 +37,9 @@ int main() {
 		init_entity(objects, obj->tile - 1, obj->x / 8, (obj->y - 8) / 8);
 	}
 
-	Cam camera = {
-		.x = 0,
-		.y = 0,
-		.zoom = 64,
-	};
+	camera.x = 0;
+	camera.y = 0;
+	camera.zoom = 64;
 
 	while (!WindowShouldClose()) {
 
@@ -115,5 +114,10 @@ void draw_entity(Cam cam, Entity* thing) {
 		.width = cam.zoom,
 		.height = cam.zoom,
 	};
-	DrawTexturePro(tileset, src, dst, (Vector2) {0, 0}, thing->rotation, WHITE);
+
+	float angle = thing->rotation;
+	float hyp = sqrtf(cam.zoom * cam.zoom + cam.zoom * cam.zoom) / -2;
+
+	Vector2 offset = {(+sin(thing->rotation + (M_PI / 4)) - sin(M_PI / 4)) * hyp, (cos(thing->rotation + (M_PI / 4)) - cos(M_PI / 4)) * hyp};
+	DrawTexturePro(tileset, src, dst, offset, thing->rotation * (180 / M_PI), WHITE);
 }
