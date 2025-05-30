@@ -22,6 +22,7 @@ void player_update(Entity* this) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         this->spd = Vector2Add(this->spd, Vector2Scale(mouse_delta_normalized, 0.01));
 
-        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, mouse_pos_raw, 10, (Color) {126, 37, 83, 255});
+        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, mouse_pos_raw, 10, P8_DARK_PURPLE);
+        DrawCircleV(mouse_pos_raw, 10, P8_DARK_PURPLE);
     }
 }
