@@ -6,7 +6,8 @@ typedef struct Entity {
     int type;
     Vector2 pos;
     Vector2 spd;
-	float rotation;
+    float rotation;
+    Rectangle hitbox;
     void (*update)(struct Entity* this);
 } Entity;
 

@@ -20,7 +20,8 @@ Entity* init_entity(Entity_array* array, int type, float x, float y) {
     new_entity->spd = (Vector2) {0, 0};
     new_entity->rotation = 0;
     new_entity->type = type;
-    new_entity->update = player_update;
+    new_entity->hitbox = (Rectangle) {.x = 0, .y = 0, .width = 1, .height = 1};
+    new_entity->update = player_update; // woag
 
 
     if (array->length >= array->capacity) {

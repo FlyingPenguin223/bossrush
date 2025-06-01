@@ -18,6 +18,8 @@ int tile_at(int x, int y);
 void draw_tile(Cam cam, int id, int x, int y);
 void draw_entity(Cam cam, Entity* thing);
 
+void draw_hitboxes(Cam cam, Entity_array* objects);
+
 Vector2 get_mouse_pos_scaled();
 
 Cam camera;
@@ -58,6 +60,8 @@ int main() {
 			thing->update(thing);
 			draw_entity(camera, thing);
 		}
+
+		draw_hitboxes(camera, objects);
 
 		EndDrawing();
 	}
@@ -120,4 +124,19 @@ void draw_entity(Cam cam, Entity* thing) {
 
 	Vector2 offset = {(+sin(thing->rotation + (M_PI / 4)) - sin(M_PI / 4)) * hyp, (cos(thing->rotation + (M_PI / 4)) - cos(M_PI / 4)) * hyp};
 	DrawTexturePro(tileset, src, dst, offset, thing->rotation * (180 / M_PI), WHITE);
+}
+
+void draw_hitboxes(Cam cam, Entity_array* objects) {
+	for (int i = 0; i < objects->length; i++) {
+		Entity* obj = get_entity(objects, i);
+
+		Rectangle hitbox_drawn = {
+			(obj->pos.x + obj->hitbox.x) * cam.zoom, 
+			(obj->pos.y + obj->hitbox.y) * cam.zoom, 
+			obj->hitbox.width * cam.zoom, 
+			obj->hitbox.height * cam.zoom
+		};
+
+		DrawRectangleLinesEx(hitbox_drawn, 5, P8_RED);
+	}
 }

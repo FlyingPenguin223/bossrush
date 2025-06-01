@@ -18,6 +18,7 @@
             }
         },
         "tileset.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 3.7653
         }
     },

@@ -7,6 +7,12 @@
 extern Cam camera;
 
 void player_update(Entity* this) {
+    static int init = 1;
+    if (init) {
+        init = 0;
+        this->hitbox = (Rectangle) {0.125, 0.125, 0.75, 0.75};
+    }
+
     this->pos = Vector2Add(this->pos, this->spd);
     Vector2 mouse_pos_raw = GetMousePosition();
 
