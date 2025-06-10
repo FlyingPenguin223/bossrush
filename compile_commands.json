@@ -1,0 +1,14 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-o",
+      "builds/main.o",
+      "main.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/main.c",
+    "output": "/home/rexifer/projects/bossrush/builds/main.o"
+  }
+]

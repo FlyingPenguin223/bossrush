@@ -8,7 +8,7 @@ typedef struct Entity {
     Vector2 spd;
     float rotation;
     Rectangle hitbox;
-	void* data;
+    void* data;
     void (*update)(struct Entity* this);
 } Entity;
 

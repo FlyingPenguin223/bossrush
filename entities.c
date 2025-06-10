@@ -81,7 +81,7 @@ void player_update(Entity* this) {
 }
 
 void grapple_update(Entity* this) {
-    this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
+    this->hitbox = (Rectangle) {0.375, 0.375, 0.25, 0.25};
     this->pos = Vector2Add(this->pos, this->spd);
 
     float epsilon = 0;
