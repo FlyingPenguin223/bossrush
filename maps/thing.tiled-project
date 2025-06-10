@@ -10,5 +10,15 @@
     "properties": [
     ],
     "propertyTypes": [
+        {
+            "id": 1,
+            "name": "flags",
+            "storageType": "int",
+            "type": "enum",
+            "values": [
+                "solid"
+            ],
+            "valuesAsFlags": true
+        }
     ]
 }

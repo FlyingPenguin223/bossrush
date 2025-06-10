@@ -23,6 +23,7 @@
         }
     },
     "last.imagePath": "/home/rexifer/Downloads",
+    "last.objectTypesPath": "/home/rexifer/projects/bossrush/maps/propertytypes.json",
     "map.height": 32,
     "map.lastUsedFormat": "json",
     "map.tileHeight": 8,
@@ -32,6 +33,7 @@
         "map.tmj"
     ],
     "project": "thing.tiled-project",
+    "property.type": "flags",
     "recentFiles": [
         "map.tmj"
     ],
