@@ -62,7 +62,7 @@ int main() {
 			draw_entity(camera, thing);
 		}
 
-		draw_hitboxes(camera, objects);
+		//draw_hitboxes(camera, objects);
 
 		EndDrawing();
 	}

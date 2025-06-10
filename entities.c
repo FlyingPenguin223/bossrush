@@ -1,6 +1,7 @@
 #include "entity.h"
 #include <stdlib.h>
 #include <raylib.h>
+#include <math.h>
 #include <raymath.h>
 
 #include <stdio.h>
@@ -61,12 +62,15 @@ void player_update(Entity* this) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         if (data->grapple == NULL) {
             data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y);
+            data->grapple->spd = Vector2Scale(mouse_delta_normalized, 0.5);
         }
 
-        this->spd = Vector2Add(this->spd, Vector2Scale(mouse_delta_normalized, 0.01));
+        Vector2 grapple_delta = Vector2Subtract(data->grapple->pos, this->pos);
+        Vector2 grapple_delta_normalized = Vector2Normalize(grapple_delta);
 
-        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, mouse_pos_raw, 10, P8_DARK_PURPLE);
-        DrawCircleV(mouse_pos_raw, 10, P8_DARK_PURPLE);
+        this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01));
+
+        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 10, P8_DARK_PURPLE);
     } else {
         if (data->grapple != NULL) {
             kill_entity(objects, data->grapple);
@@ -77,6 +81,30 @@ void player_update(Entity* this) {
 
 void grapple_update(Entity* this) {
     this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
+    this->pos = Vector2Add(this->pos, this->spd);
+
+    float epsilon = 0.01;
+
+    this->pos.x += this->spd.x;
+    if (is_entity_touching_wall(this) && fabsf(this->spd.x) > 0) {
+        if (this->spd.x > 0) {
+            this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
+        } else {
+            this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
+        }
+        this->spd = (Vector2) {0, 0};
+    }
+
+    this->pos.y += this->spd.y;
+    if (is_entity_touching_wall(this) && fabsf(this->spd.y) > 0) {
+        if (this->spd.y > 0) {
+            this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
+        } else {
+            this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
+        }
+        this->spd = (Vector2) {0, 0};
+    }
+
 }
 
 int is_tile_solid(int tile) {
