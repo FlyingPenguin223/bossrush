@@ -62,16 +62,17 @@ void player_update(Entity* this) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         if (data->grapple == NULL) {
             data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y);
-            data->grapple->spd = Vector2Scale(mouse_delta_normalized, 0.5);
+            data->grapple->spd = Vector2Scale(mouse_delta_normalized, 1);
             data->grapple->rotation = mouse_angle + M_PI / 2;
         }
 
         Vector2 grapple_delta = Vector2Subtract(data->grapple->pos, this->pos);
         Vector2 grapple_delta_normalized = Vector2Normalize(grapple_delta);
 
-        this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01));
+        if (Vector2Length(data->grapple->spd) == 0)
+            this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01)); // only if grapple has stopped
 
-        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 10, P8_DARK_PURPLE);
+        DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
     } else {
         if (data->grapple != NULL) {
             kill_entity(objects, data->grapple);
@@ -82,34 +83,38 @@ void player_update(Entity* this) {
 
 void grapple_update(Entity* this) {
     this->hitbox = (Rectangle) {0.375, 0.375, 0.25, 0.25};
-    this->pos = Vector2Add(this->pos, this->spd);
+
+    Vector2 sub_spd = Vector2Scale(this->spd, 0.1);
 
     float epsilon = 0;
 
-    this->pos.x += this->spd.x;
-    if (is_entity_touching_wall(this) && fabsf(this->spd.x) > 0) {
-        if (this->spd.x > 0) {
-            this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
-            this->rotation = M_PI / 2;
-        } else {
-            this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
-            this->rotation = -M_PI / 2;
+    for (int i = 0; i < 10; i++) {
+        this->pos.x += sub_spd.x;
+        if (is_entity_touching_wall(this) && fabsf(sub_spd.x) > 0) {
+            if (sub_spd.x > 0) {
+                this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
+                this->rotation = M_PI / 2;
+            } else {
+                this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
+                this->rotation = -M_PI / 2;
+            }
+            this->spd = (Vector2) {0, 0};
+            break;
         }
-        this->spd = (Vector2) {0, 0};
-    }
 
-    this->pos.y += this->spd.y;
-    if (is_entity_touching_wall(this) && fabsf(this->spd.y) > 0) {
-        if (this->spd.y > 0) {
-            this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
-            this->rotation = M_PI;
-        } else {
-            this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
-            this->rotation = 0;
+        this->pos.y += sub_spd.y;
+        if (is_entity_touching_wall(this) && fabsf(sub_spd.y) > 0) {
+            if (sub_spd.y > 0) {
+                this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
+                this->rotation = M_PI;
+            } else {
+                this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
+                this->rotation = 0;
+            }
+            this->spd = (Vector2) {0, 0};
+            break;
         }
-        this->spd = (Vector2) {0, 0};
     }
-
 }
 
 int is_tile_solid(int tile) {
