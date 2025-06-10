@@ -63,6 +63,7 @@ void player_update(Entity* this) {
         if (data->grapple == NULL) {
             data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y);
             data->grapple->spd = Vector2Scale(mouse_delta_normalized, 0.5);
+            data->grapple->rotation = mouse_angle + M_PI / 2;
         }
 
         Vector2 grapple_delta = Vector2Subtract(data->grapple->pos, this->pos);
@@ -83,14 +84,16 @@ void grapple_update(Entity* this) {
     this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
     this->pos = Vector2Add(this->pos, this->spd);
 
-    float epsilon = 0.01;
+    float epsilon = 0;
 
     this->pos.x += this->spd.x;
     if (is_entity_touching_wall(this) && fabsf(this->spd.x) > 0) {
         if (this->spd.x > 0) {
             this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
+            this->rotation = M_PI / 2;
         } else {
             this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
+            this->rotation = -M_PI / 2;
         }
         this->spd = (Vector2) {0, 0};
     }
@@ -99,8 +102,10 @@ void grapple_update(Entity* this) {
     if (is_entity_touching_wall(this) && fabsf(this->spd.y) > 0) {
         if (this->spd.y > 0) {
             this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
+            this->rotation = M_PI;
         } else {
             this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
+            this->rotation = 0;
         }
         this->spd = (Vector2) {0, 0};
     }
