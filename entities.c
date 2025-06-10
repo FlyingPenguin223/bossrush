@@ -1,4 +1,5 @@
 #include "entity.h"
+#include <stdlib.h>
 #include <raylib.h>
 #include <raymath.h>
 
@@ -10,13 +11,19 @@
 int is_entity_touching_wall(Entity* thing);
 
 extern Cam camera;
+extern Entity_array* objects;
+
+struct player_data {
+    Entity* grapple;
+};
 
 void player_update(Entity* this) {
-    static int init = 1;
-    if (init) {
-        init = 0;
+    if (this->data == NULL) {
+        this->data = malloc(sizeof(struct player_data));
         this->hitbox = (Rectangle) {0.125, 0.125, 0.75, 0.75};
     }
+
+    struct player_data* data = (struct player_data*) (this->data);
 
     float epsilon = 0.01;
 
@@ -52,11 +59,24 @@ void player_update(Entity* this) {
     this->rotation = mouse_angle + M_PI / 2;
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        if (data->grapple == NULL) {
+            data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y);
+        }
+
         this->spd = Vector2Add(this->spd, Vector2Scale(mouse_delta_normalized, 0.01));
 
         DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, mouse_pos_raw, 10, P8_DARK_PURPLE);
         DrawCircleV(mouse_pos_raw, 10, P8_DARK_PURPLE);
+    } else {
+        if (data->grapple != NULL) {
+            kill_entity(objects, data->grapple);
+            data->grapple = NULL;
+        }
     }
+}
+
+void grapple_update(Entity* this) {
+    this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
 }
 
 int is_tile_solid(int tile) {

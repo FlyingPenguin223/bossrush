@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "entity.h"
+#include "entities.h"
 
 extern void player_update(Entity* this);
 
@@ -21,8 +22,8 @@ Entity* init_entity(Entity_array* array, int type, float x, float y) {
     new_entity->rotation = 0;
     new_entity->type = type;
     new_entity->hitbox = (Rectangle) {.x = 0, .y = 0, .width = 1, .height = 1};
-    new_entity->update = player_update; // woag
-
+    new_entity->data = NULL;
+    new_entity->update = obj_updates[type];
 
     if (array->length >= array->capacity) {
         array->capacity *= 2;
@@ -36,10 +37,12 @@ Entity* init_entity(Entity_array* array, int type, float x, float y) {
     return new_entity;
 }
 
-void kill_entity(Entity_array* array, int id) {
+void kill_entity_id(Entity_array* array, int id) {
     if (id < 0 || id >= array->length)
         return;
 
+    if (array->array[id]->data != NULL)
+        free(array->array[id]->data);
     free(array->array[id]);
 
     for (int i = id+1; i < array->length; i++) {
@@ -47,6 +50,15 @@ void kill_entity(Entity_array* array, int id) {
     }
 
     array->length--;
+}
+
+void kill_entity(Entity_array* array, Entity* thing) {
+    for (int i = 0; i < array->length; i++) {
+        if (thing == array->array[i]) {
+            kill_entity_id(array, i);
+            break;
+        }
+    }
 }
 
 Entity* get_entity(Entity_array* array, int id) {
@@ -58,7 +70,7 @@ Entity* get_entity(Entity_array* array, int id) {
 
 void free_entity_array(Entity_array* array) {
     for (int i = array->length-1; i >= 0; i--) {
-        kill_entity(array, i);
+        kill_entity_id(array, i);
     }
     free(array->array);
     free(array);

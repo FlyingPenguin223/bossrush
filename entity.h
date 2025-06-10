@@ -8,6 +8,7 @@ typedef struct Entity {
     Vector2 spd;
     float rotation;
     Rectangle hitbox;
+	void* data;
     void (*update)(struct Entity* this);
 } Entity;
 
@@ -21,7 +22,8 @@ Entity_array* init_entity_array();
 
 Entity* init_entity(Entity_array* array, int type, float x, float y);
 
-void kill_entity(Entity_array* array, int id);
+void kill_entity_id(Entity_array* array, int id);
+void kill_entity(Entity_array* array, Entity* thing);
 
 Entity* get_entity(Entity_array* array, int id);
 

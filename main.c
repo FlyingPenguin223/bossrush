@@ -23,6 +23,7 @@ void draw_hitboxes(Cam cam, Entity_array* objects);
 Vector2 get_mouse_pos_scaled();
 
 Cam camera;
+Entity_array* objects;
 
 int main() {
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "boss rush!");
@@ -31,7 +32,7 @@ int main() {
 
 	load_textures();
 
-	Entity_array* objects = init_entity_array();
+	objects = init_entity_array();
 
 	const Tiled2cObjectLayer* objlayer = &map.layers[1].objectlayer;
 	for (int i = 0; i < objlayer->numobjects; i++) {
