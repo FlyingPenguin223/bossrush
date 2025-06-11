@@ -20,7 +20,7 @@ typedef struct Entity_array {
 
 Entity_array* init_entity_array();
 
-Entity* init_entity(Entity_array* array, int type, float x, float y);
+Entity* init_entity(Entity_array* array, int type, float x, float y, float rotation);
 
 void kill_entity_id(Entity_array* array, int id);
 void kill_entity(Entity_array* array, Entity* thing);

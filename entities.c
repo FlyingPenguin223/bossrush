@@ -61,9 +61,8 @@ void player_update(Entity* this) {
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         if (data->grapple == NULL) {
-            data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y);
-            data->grapple->spd = Vector2Scale(mouse_delta_normalized, 1);
-            data->grapple->rotation = mouse_angle + M_PI / 2;
+            data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y, this->rotation);
+            data->grapple->spd = Vector2Scale(mouse_delta_normalized, 1.5);
         }
 
         Vector2 grapple_delta = Vector2Subtract(data->grapple->pos, this->pos);
@@ -114,6 +113,35 @@ void grapple_update(Entity* this) {
             this->spd = (Vector2) {0, 0};
             break;
         }
+    }
+}
+
+void bullet_update(Entity* this) {
+    this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
+    Vector2 spd = (Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)};
+    this->spd = Vector2Scale(spd, 0.1);
+    this->pos = Vector2Add(this->pos, this->spd);
+    if (is_entity_touching_wall(this))
+        kill_entity(objects, this);
+}
+
+struct turret_data {
+    int timer;
+};
+
+void turret_update(Entity* this) {
+    if (this->data == NULL) {
+        this->data = malloc(sizeof(struct turret_data));
+        struct turret_data* data = (struct turret_data*) this->data;
+        data->timer = 0;
+    }
+
+    struct turret_data* data = (struct turret_data*) this->data;
+
+    data->timer++;
+    if (data->timer >= 30) {
+        data->timer = 0;
+        init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
     }
 }
 

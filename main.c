@@ -37,7 +37,7 @@ int main() {
 	const Tiled2cObjectLayer* objlayer = &map.layers[1].objectlayer;
 	for (int i = 0; i < objlayer->numobjects; i++) {
 		const Tiled2cObject* obj = &objlayer->objects[i];
-		init_entity(objects, obj->tile - 1, obj->x / 8, (obj->y - 8) / 8);
+		init_entity(objects, obj->tile - 1, obj->x / 8, (obj->y - 8) / 8, obj->rotation * M_PI / 180);
 	}
 
 	camera.x = 0;

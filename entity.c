@@ -14,12 +14,12 @@ Entity_array* init_entity_array() {
     return ret;
 }
 
-Entity* init_entity(Entity_array* array, int type, float x, float y) {
+Entity* init_entity(Entity_array* array, int type, float x, float y, float rotation) {
     Entity* new_entity = malloc(sizeof(Entity));
 
     new_entity->pos = (Vector2) {x, y};
     new_entity->spd = (Vector2) {0, 0};
-    new_entity->rotation = 0;
+    new_entity->rotation = rotation;
     new_entity->type = type;
     new_entity->hitbox = (Rectangle) {.x = 0, .y = 0, .width = 1, .height = 1};
     new_entity->data = NULL;
