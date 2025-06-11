@@ -10,5 +10,41 @@
     "directory": "/home/rexifer/projects/bossrush",
     "file": "/home/rexifer/projects/bossrush/main.c",
     "output": "/home/rexifer/projects/bossrush/builds/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-o",
+      "builds/entities.o",
+      "entities.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/entities.c",
+    "output": "/home/rexifer/projects/bossrush/builds/entities.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-o",
+      "builds/entity.o",
+      "entity.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/entity.c",
+    "output": "/home/rexifer/projects/bossrush/builds/entity.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-o",
+      "builds/map.o",
+      "map.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/map.c",
+    "output": "/home/rexifer/projects/bossrush/builds/map.o"
   }
 ]
