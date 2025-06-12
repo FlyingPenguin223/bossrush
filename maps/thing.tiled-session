@@ -10,16 +10,17 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "map.tmj": {
-            "scale": 3.8148437499999996,
-            "selectedLayer": 0,
+            "scale": 5.7286,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 139.193118984231,
-                "y": 125.03788654515671
+                "x": 134.06416925601368,
+                "y": 91.81999092273855
             }
         },
         "tileset.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 3.7653
+            "scaleInDock": 3.7653,
+            "scaleInEditor": 13.11
         }
     },
     "last.imagePath": "/home/rexifer/Downloads",
@@ -30,11 +31,13 @@
     "map.tileWidth": 8,
     "map.width": 32,
     "openFiles": [
-        "map.tmj"
+        "map.tmj",
+        "tileset.tsx"
     ],
     "project": "thing.tiled-project",
     "property.type": "flags",
     "recentFiles": [
+        "tileset.tsx",
         "map.tmj"
     ],
     "tileset.lastUsedFormat": "tsx",

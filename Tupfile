@@ -1,3 +1,6 @@
+CLINK += -lraylib
+CLINK += -lm
+
 : maps/map.tmj |> tiled2c %f %B | clang-format > %o |> map.c
 : foreach *.c |> gcc -c %f -o %o |> builds/%B.o
-: builds/*.o |> gcc -lraylib -lm %f -o %o |> thing
+: builds/*.o |> gcc %f $(CLINK) -o %o |> thing
