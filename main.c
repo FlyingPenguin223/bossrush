@@ -47,7 +47,6 @@ int main() {
 	while (!WindowShouldClose()) {
 
 		BeginDrawing();
-
 		ClearBackground(BLACK);
 
 		for (int y = 0; y < map.height; y++) {
