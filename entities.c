@@ -10,12 +10,17 @@
 #include "tiled2c.h"
 
 int is_entity_touching_wall(Entity* thing);
+Entity* entity_colliding(Entity_array* objects, Entity* thing);
 
 extern Cam camera;
 extern Entity_array* objects;
 
 struct player_data {
 	Entity* grapple;
+};
+
+struct grapple_data {
+	int attached;
 };
 
 void player_update(Entity* this) {
@@ -68,8 +73,11 @@ void player_update(Entity* this) {
 		Vector2 grapple_delta = Vector2Subtract(data->grapple->pos, this->pos);
 		Vector2 grapple_delta_normalized = Vector2Normalize(grapple_delta);
 
-		if (Vector2Length(data->grapple->spd) == 0)
-			this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01)); // only if grapple has stopped
+		struct grapple_data* grapple_data = (struct grapple_data*) data->grapple->data;
+		if (grapple_data != NULL) {
+			if (grapple_data->attached)
+				this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01)); // only if grapple has stopped
+		}
 
 		DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
 	} else {
@@ -81,37 +89,56 @@ void player_update(Entity* this) {
 }
 
 void grapple_update(Entity* this) {
-	this->hitbox = (Rectangle) {0.375, 0.375, 0.25, 0.25};
+	if (this->data == NULL) {
+		this->data = malloc(sizeof(struct grapple_data));
+		this->hitbox = (Rectangle) {0.375, 0.375, 0.25, 0.25};
+		struct grapple_data* data = (struct grapple_data*) this->data;
+		data->attached = 0;
+	}
+
+	struct grapple_data* data = (struct grapple_data*) this->data;
 
 	Vector2 sub_spd = Vector2Scale(this->spd, 0.1);
 
 	float epsilon = 0;
 
-	for (int i = 0; i < 10; i++) {
-		this->pos.x += sub_spd.x;
-		if (is_entity_touching_wall(this) && fabsf(sub_spd.x) > 0) {
-			if (sub_spd.x > 0) {
-				this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
-				this->rotation = M_PI / 2;
-			} else {
-				this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
-				this->rotation = -M_PI / 2;
+	if (!data->attached) {
+		for (int i = 0; i < 10; i++) {
+			this->pos.x += sub_spd.x;
+			if (is_entity_touching_wall(this) && fabsf(sub_spd.x) > 0) {
+				if (sub_spd.x > 0) {
+					this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
+					this->rotation = M_PI / 2;
+				} else {
+					this->pos.x = (int) (this->pos.x + this->hitbox.x) + 1 - this->hitbox.x + epsilon;
+					this->rotation = -M_PI / 2;
+				}
+				this->spd = (Vector2) {0, 0};
+				data->attached = 1;
+				break;
 			}
-			this->spd = (Vector2) {0, 0};
-			break;
-		}
 
-		this->pos.y += sub_spd.y;
-		if (is_entity_touching_wall(this) && fabsf(sub_spd.y) > 0) {
-			if (sub_spd.y > 0) {
-				this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
-				this->rotation = M_PI;
-			} else {
-				this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
-				this->rotation = 0;
+			this->pos.y += sub_spd.y;
+			if (is_entity_touching_wall(this) && fabsf(sub_spd.y) > 0) {
+				if (sub_spd.y > 0) {
+					this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
+					this->rotation = M_PI;
+				} else {
+					this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
+					this->rotation = 0;
+				}
+				this->spd = (Vector2) {0, 0};
+				data->attached = 1;
+				break;
 			}
-			this->spd = (Vector2) {0, 0};
-			break;
+
+			Entity* thing = entity_colliding(objects, this);
+			if (thing) {
+				if (thing->type > 0) {
+					data->attached = 1;
+					break;
+				}
+			}
 		}
 	}
 }
@@ -177,6 +204,11 @@ Entity* entity_colliding(Entity_array* objects, Entity* thing) {
 		if (thing != obj) {
 			Rectangle h1 = thing->hitbox;
 			Rectangle h2 = obj->hitbox;
+			h1.x += thing->pos.x;
+			h1.y += thing->pos.y;
+
+			h2.x += obj->pos.x;
+			h2.y += obj->pos.y;
 
 			if (h1.x < h2.x + h2.width && h1.x + h1.width > h2.x && h1.y < h2.y + h2.height && h1.y + h1.height > h2.y) {
 				return obj;
