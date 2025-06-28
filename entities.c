@@ -11,6 +11,17 @@
 
 int is_entity_touching_wall(Entity* thing);
 Entity* entity_colliding(Entity_array* objects, Entity* thing);
+int entity_has_flag(Entity* thing, short flag);
+
+#define ENTITY_FLAG_SOLID  ( (short) (0b0000000000000001) )
+#define ENTITY_FLAG_BULLET ( (short) (0b0000000000000010) )
+
+short entity_flags[] = {
+	0,
+	0,
+	ENTITY_FLAG_BULLET,
+	ENTITY_FLAG_SOLID,
+}; // from entities.h, can't include due to pragma once fail?
 
 extern Cam camera;
 extern Entity_array* objects;
@@ -20,8 +31,12 @@ struct player_data {
 };
 
 struct grapple_data {
+	Entity* player;
 	int attached;
+	Entity* attached_to;
 };
+
+const float grapple_accel = 0.01;
 
 void player_update(Entity* this) {
 	if (this->data == NULL) {
@@ -75,8 +90,10 @@ void player_update(Entity* this) {
 
 		struct grapple_data* grapple_data = (struct grapple_data*) data->grapple->data;
 		if (grapple_data != NULL) {
-			if (grapple_data->attached)
-				this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, 0.01)); // only if grapple has stopped
+			if (grapple_data->attached) {
+				grapple_data->player = this;
+				this->spd = Vector2Add(this->spd, Vector2Scale(grapple_delta_normalized, grapple_accel)); // only if grapple has stopped
+			}
 		}
 
 		DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
@@ -94,6 +111,7 @@ void grapple_update(Entity* this) {
 		this->hitbox = (Rectangle) {0.375, 0.375, 0.25, 0.25};
 		struct grapple_data* data = (struct grapple_data*) this->data;
 		data->attached = 0;
+		data->attached_to = NULL;
 	}
 
 	struct grapple_data* data = (struct grapple_data*) this->data;
@@ -134,11 +152,30 @@ void grapple_update(Entity* this) {
 
 			Entity* thing = entity_colliding(objects, this);
 			if (thing) {
-				if (thing->type > 0) {
+				if (entity_has_flag(thing, ENTITY_FLAG_SOLID | ENTITY_FLAG_BULLET)) {
 					data->attached = 1;
+					data->attached_to = thing;
 					break;
 				}
 			}
+		}
+	} else if (data->attached_to) {
+		if (is_entity_valid(objects, data->attached_to)) {
+			if (entity_has_flag(data->attached_to, ENTITY_FLAG_BULLET)) {
+				Vector2 player_delta = Vector2Subtract(data->player->pos, this->pos);
+				Vector2 player_delta_normalized = Vector2Normalize(player_delta);
+
+				Vector2 bullet_delta = Vector2Subtract(data->player->pos, data->attached_to->pos);
+				float bullet_angle_initial = atan2(bullet_delta.y, bullet_delta.x);
+				data->attached_to->spd = Vector2Add(data->attached_to->spd, Vector2Scale(player_delta_normalized, grapple_accel));
+				bullet_delta = Vector2Subtract(data->player->pos, Vector2Add(data->attached_to->pos, data->attached_to->spd)); // account for adding speed, which bullet does
+				float bullet_angle_after = atan2(bullet_delta.y, bullet_delta.x);
+				data->attached_to->rotation += bullet_angle_after - bullet_angle_initial;
+				this->pos = data->attached_to->pos;
+			}
+		} else { // bullet destroyed
+			data->attached = 0;
+			data->attached_to = NULL;
 		}
 	}
 }
@@ -146,7 +183,8 @@ void grapple_update(Entity* this) {
 void bullet_update(Entity* this) {
 	this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
 	Vector2 spd = (Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)};
-	this->spd = Vector2Scale(spd, 0.1);
+	spd = Vector2Scale(spd, 0.1);
+	this->pos = Vector2Add(this->pos, spd);
 	this->pos = Vector2Add(this->pos, this->spd);
 	if (is_entity_touching_wall(this))
 		kill_entity(objects, this);
@@ -173,7 +211,7 @@ void turret_update(Entity* this) {
 }
 
 int is_tile_solid(int tile) {
-	return tile > 0; // tmp, use fget system
+	return tile > 4; // tmp, use fget system
 }
 
 extern Tiled2cMap map;
@@ -216,4 +254,8 @@ Entity* entity_colliding(Entity_array* objects, Entity* thing) {
 		}
 	}
 	return NULL;
+}
+
+int entity_has_flag(Entity* thing, short flag) {
+	return entity_flags[thing->type] & flag;
 }

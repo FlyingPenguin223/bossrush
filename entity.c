@@ -75,3 +75,11 @@ void free_entity_array(Entity_array* array) {
     free(array->array);
     free(array);
 }
+
+int is_entity_valid(Entity_array* array, Entity* thing) {
+	for (int i = 0; i < array->length; i++) {
+		if (thing == array->array[i])
+			return 1;
+	}
+	return 0;
+}

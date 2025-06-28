@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ENTITY_H
+#define ENTITY_H
 
 #include <raylib.h>
 
@@ -28,3 +29,7 @@ void kill_entity(Entity_array* array, Entity* thing);
 Entity* get_entity(Entity_array* array, int id);
 
 void free_entity_array(Entity_array* array);
+
+int is_entity_valid(Entity_array* array, Entity* thing);
+
+#endif

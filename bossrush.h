@@ -1,3 +1,6 @@
+#ifndef BOSSRUSH_H
+#define BOSSRUSH_H
+
 typedef struct {
 	float x;
 	float y;
@@ -38,3 +41,5 @@ typedef struct {
 #define P8_MAUVE          ( (Color) {117, 70, 101, 255} )
 #define P8_DARK_PEACH     ( (Color) {255, 110, 89, 255} )
 #define P8_PEACH          ( (Color) {255, 157, 129, 255} )
+
+#endif
