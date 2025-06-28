@@ -42,7 +42,7 @@ int main() {
 
 	camera.x = 0;
 	camera.y = 0;
-	camera.zoom = 32;
+	camera.zoom = 64;
 
 	while (!WindowShouldClose()) {
 

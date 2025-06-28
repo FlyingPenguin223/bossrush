@@ -37,7 +37,7 @@ struct grapple_data {
 	Entity* attached_to;
 };
 
-const float grapple_accel = 0.01;
+const float grapple_accel = 0.005;
 
 void player_update(Entity* this) {
 	if (this->data == NULL) {
@@ -165,12 +165,7 @@ void grapple_update(Entity* this) {
 				Vector2 player_delta = Vector2Subtract(data->player->pos, this->pos);
 				Vector2 player_delta_normalized = Vector2Normalize(player_delta);
 
-				Vector2 bullet_delta = Vector2Subtract(data->player->pos, data->attached_to->pos);
-				float bullet_angle_initial = atan2(bullet_delta.y, bullet_delta.x);
 				data->attached_to->spd = Vector2Add(data->attached_to->spd, Vector2Scale(player_delta_normalized, grapple_accel));
-				bullet_delta = Vector2Subtract(data->player->pos, Vector2Add(data->attached_to->pos, data->attached_to->spd)); // account for adding speed, which bullet does
-				float bullet_angle_after = atan2(bullet_delta.y, bullet_delta.x);
-				data->attached_to->rotation -= bullet_angle_after - bullet_angle_initial;
 				this->pos = data->attached_to->pos;
 			}
 		} else { // bullet destroyed
@@ -182,9 +177,9 @@ void grapple_update(Entity* this) {
 
 void bullet_update(Entity* this) {
 	this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
-	Vector2 spd = (Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)};
-	spd = Vector2Scale(spd, 0.1);
-	this->pos = Vector2Add(this->pos, spd);
+	// Vector2 spd = (Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)};
+	// spd = Vector2Scale(spd, 0.1);
+	// this->pos = Vector2Add(this->pos, spd);
 	this->pos = Vector2Add(this->pos, this->spd);
 	if (is_entity_touching_wall(this))
 		kill_entity(objects, this);
@@ -206,7 +201,8 @@ void turret_update(Entity* this) {
 	data->timer++;
 	if (data->timer >= 30) {
 		data->timer = 0;
-		init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
+		Entity* bullet = init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
+		bullet->spd = Vector2Scale((Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)}, 0.1);
 	}
 }
 
