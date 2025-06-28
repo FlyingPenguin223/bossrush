@@ -42,9 +42,17 @@ int main() {
 
 	camera.x = 0;
 	camera.y = 0;
-	camera.zoom = 64;
+	camera.zoom = 32;
 
 	while (!WindowShouldClose()) {
+
+		Entity* player = get_entity_by_type(objects, 0);
+		
+		float num_tiles_across = WINDOW_WIDTH / camera.zoom;
+		float num_tiles_down = WINDOW_HEIGHT / camera.zoom;
+
+		camera.x = player->pos.x - num_tiles_across / 2;
+		camera.y = player->pos.y - num_tiles_down / 2;
 
 		BeginDrawing();
 		ClearBackground(BLACK);

@@ -27,6 +27,7 @@ void kill_entity_id(Entity_array* array, int id);
 void kill_entity(Entity_array* array, Entity* thing);
 
 Entity* get_entity(Entity_array* array, int id);
+Entity* get_entity_by_type(Entity_array* array, int type);
 
 void free_entity_array(Entity_array* array);
 

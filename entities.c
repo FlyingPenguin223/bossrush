@@ -8,6 +8,7 @@
 
 #include "bossrush.h"
 #include "tiled2c.h"
+#include "mouse.h"
 
 int is_entity_touching_wall(Entity* thing);
 Entity* entity_colliding(Entity_array* objects, Entity* thing);
@@ -68,9 +69,7 @@ void player_update(Entity* this) {
 		this->spd.y *= -0.8;
 	}
 
-	Vector2 mouse_pos_raw = GetMousePosition();
-
-	Vector2 mouse_pos = {mouse_pos_raw.x / camera.zoom, mouse_pos_raw.y / camera.zoom};
+	Vector2 mouse_pos = get_mouse_position();
 
 	Vector2 mouse_delta = Vector2Subtract(mouse_pos, (Vector2) {this->pos.x + 0.5, this->pos.y + 0.5});
 	Vector2 mouse_delta_normalized = Vector2Normalize(mouse_delta);
@@ -96,7 +95,8 @@ void player_update(Entity* this) {
 			}
 		}
 
-		DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
+		// DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
+		draw_line(Vector2AddValue(this->pos, 0.5), Vector2AddValue(data->grapple->pos, 0.5), 0.2, P8_DARK_PURPLE);
 	} else {
 		if (data->grapple != NULL) {
 			kill_entity(objects, data->grapple);
@@ -170,7 +170,7 @@ void grapple_update(Entity* this) {
 				data->attached_to->spd = Vector2Add(data->attached_to->spd, Vector2Scale(player_delta_normalized, grapple_accel));
 				bullet_delta = Vector2Subtract(data->player->pos, Vector2Add(data->attached_to->pos, data->attached_to->spd)); // account for adding speed, which bullet does
 				float bullet_angle_after = atan2(bullet_delta.y, bullet_delta.x);
-				data->attached_to->rotation += bullet_angle_after - bullet_angle_initial;
+				data->attached_to->rotation -= bullet_angle_after - bullet_angle_initial;
 				this->pos = data->attached_to->pos;
 			}
 		} else { // bullet destroyed

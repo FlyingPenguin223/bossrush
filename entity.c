@@ -68,6 +68,14 @@ Entity* get_entity(Entity_array* array, int id) {
     return array->array[id];
 }
 
+Entity* get_entity_by_type(Entity_array* array, int type) {
+	for (int i = 0; i < array->length; i++) {
+		if (array->array[i]->type == type)
+			return array->array[i];
+	}
+	return NULL;
+}
+
 void free_entity_array(Entity_array* array) {
     for (int i = array->length-1; i >= 0; i--) {
         kill_entity_id(array, i);
