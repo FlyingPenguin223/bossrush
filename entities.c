@@ -37,7 +37,7 @@ struct grapple_data {
 	Entity* attached_to;
 };
 
-const float grapple_accel = 0.005;
+const float grapple_accel = 0.01;
 
 void player_update(Entity* this) {
 	if (this->data == NULL) {
@@ -181,8 +181,10 @@ void bullet_update(Entity* this) {
 	// spd = Vector2Scale(spd, 0.1);
 	// this->pos = Vector2Add(this->pos, spd);
 	this->pos = Vector2Add(this->pos, this->spd);
-	if (is_entity_touching_wall(this))
+	if (is_entity_touching_wall(this)) {
+		init_entity(objects, 5, this->pos.x, this->pos.y, 0);
 		kill_entity(objects, this);
+	}
 }
 
 struct turret_data {
@@ -203,6 +205,29 @@ void turret_update(Entity* this) {
 		data->timer = 0;
 		Entity* bullet = init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
 		bullet->spd = Vector2Scale((Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)}, 0.1);
+	}
+}
+
+void arrow_update(Entity* this) {
+
+}
+
+struct explosion_data {
+	int timer;
+};
+
+void explosion_update(Entity* this) {
+	if (this->data == NULL) {
+		this->data = malloc(sizeof(struct explosion_data));
+		struct explosion_data* data = (struct explosion_data*) this->data;
+		data->timer = 30;
+	}
+
+	struct explosion_data* data = (struct explosion_data*) this->data;
+	data->timer--;
+
+	if (data->timer <= 0) {
+		kill_entity(objects, this);
 	}
 }
 

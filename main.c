@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <raylib.h>
 #include <math.h>
 
@@ -35,14 +34,14 @@ int main() {
 	objects = init_entity_array();
 
 	const Tiled2cObjectLayer* objlayer = &map.layers[1].objectlayer;
-	for (int i = 0; i < objlayer->numobjects; i++) {
+	for (unsigned int i = 0; i < objlayer->numobjects; i++) {
 		const Tiled2cObject* obj = &objlayer->objects[i];
 		init_entity(objects, obj->tile - 1, obj->x / 8, (obj->y - 8) / 8, obj->rotation * M_PI / 180);
 	}
 
 	camera.x = 0;
 	camera.y = 0;
-	camera.zoom = 64;
+	camera.zoom = 32;
 
 	while (!WindowShouldClose()) {
 
@@ -51,14 +50,19 @@ int main() {
 		float num_tiles_across = WINDOW_WIDTH / camera.zoom;
 		float num_tiles_down = WINDOW_HEIGHT / camera.zoom;
 
-		camera.x = player->pos.x - num_tiles_across / 2;
-		camera.y = player->pos.y - num_tiles_down / 2;
+		float cam_ideal_x = player->pos.x - num_tiles_across / 2;
+		float cam_ideal_y = player->pos.y - num_tiles_down / 2;
+
+		float smoothness = 10;
+
+		camera.x = ((camera.x * smoothness) + cam_ideal_x) / (smoothness + 1);
+		camera.y = ((camera.y * smoothness) + cam_ideal_y) / (smoothness + 1);
 
 		BeginDrawing();
 		ClearBackground(BLACK);
 
-		for (int y = 0; y < map.height; y++) {
-			for (int x = 0; x < map.width; x++) {
+		for (unsigned int y = 0; y < map.height; y++) {
+			for (unsigned int x = 0; x < map.width; x++) {
 				draw_tile(camera, tile_at(x, y), x, y);
 			}
 		}
@@ -88,9 +92,6 @@ int tile_at(int x, int y) {
 }
 
 void draw_tile(Cam cam, int id, int x, int y) {
-	int tileset_w = 8;
-	int tileset_h = 8;
-
 	id--;
 
 	if (id < 0)
@@ -130,8 +131,8 @@ void draw_entity(Cam cam, Entity* thing) {
 	float angle = thing->rotation;
 	float hyp = sqrtf(cam.zoom * cam.zoom + cam.zoom * cam.zoom) / -2;
 
-	Vector2 offset = {(+sin(thing->rotation + (M_PI / 4)) - sin(M_PI / 4)) * hyp, (cos(thing->rotation + (M_PI / 4)) - cos(M_PI / 4)) * hyp};
-	DrawTexturePro(tileset, src, dst, offset, thing->rotation * (180 / M_PI), WHITE);
+	Vector2 offset = {(+sinf(angle + (M_PI / 4)) - sinf(M_PI / 4)) * hyp, (cosf(angle + (M_PI / 4)) - cosf(M_PI / 4)) * hyp};
+	DrawTexturePro(tileset, src, dst, offset, angle * (180 / M_PI), WHITE);
 }
 
 void draw_hitboxes(Cam cam, Entity_array* objects) {
@@ -139,8 +140,8 @@ void draw_hitboxes(Cam cam, Entity_array* objects) {
 		Entity* obj = get_entity(objects, i);
 
 		Rectangle hitbox_drawn = {
-			(obj->pos.x + obj->hitbox.x) * cam.zoom, 
-			(obj->pos.y + obj->hitbox.y) * cam.zoom, 
+			(obj->pos.x + obj->hitbox.x - camera.x) * cam.zoom, 
+			(obj->pos.y + obj->hitbox.y - camera.y) * cam.zoom, 
 			obj->hitbox.width * cam.zoom, 
 			obj->hitbox.height * cam.zoom
 		};

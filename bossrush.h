@@ -42,4 +42,6 @@ typedef struct {
 #define P8_DARK_PEACH     ( (Color) {255, 110, 89, 255} )
 #define P8_PEACH          ( (Color) {255, 157, 129, 255} )
 
+#define M_PI 3.141592653
+
 #endif

@@ -1,6 +1,10 @@
+CFLAGS += -O3
+CFLAGS += -std=c23
+CFLAGS += -Wall -Wextra
+
 CLINK += -lraylib
 CLINK += -lm
 
 : maps/map.tmj |> tiled2c %f %B | clang-format > %o |> map.c
-: foreach *.c |> gcc -c %f -o %o |> builds/%B.o
-: builds/*.o |> gcc %f $(CLINK) -o %o |> thing
+: foreach *.c |> gcc -c $(CFLAGS) %f -o %o |> builds/%B.o
+: builds/*.o |> gcc $(CFLAGS) %f $(CLINK) -o %o |> thing
