@@ -9,20 +9,12 @@
 #include "bossrush.h"
 #include "tiled2c.h"
 #include "mouse.h"
+#include "entities.h"
 
-int is_entity_touching_wall(Entity* thing);
+int is_entity_touching_wall(Entity_array* objects, Entity* thing);
 Entity* entity_colliding(Entity_array* objects, Entity* thing);
 int entity_has_flag(Entity* thing, short flag);
-
-#define ENTITY_FLAG_SOLID  ( (short) (0b0000000000000001) )
-#define ENTITY_FLAG_BULLET ( (short) (0b0000000000000010) )
-
-short entity_flags[] = {
-	0,
-	0,
-	ENTITY_FLAG_BULLET,
-	ENTITY_FLAG_SOLID,
-}; // from entities.h, can't include due to pragma once fail?
+Entity* entity_colliding_with_flag(Entity_array* objects, Entity* thing, short flag);
 
 extern Cam camera;
 extern Entity_array* objects;
@@ -50,7 +42,7 @@ void player_update(Entity* this) {
 	float epsilon = 0.01;
 
 	this->pos.x += this->spd.x;
-	if (is_entity_touching_wall(this)) {
+	if (is_entity_touching_wall(objects, this)) {
 		if (this->spd.x > 0) {
 			this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
 		} else {
@@ -60,7 +52,7 @@ void player_update(Entity* this) {
 	}
 
 	this->pos.y += this->spd.y;
-	if (is_entity_touching_wall(this)) {
+	if (is_entity_touching_wall(objects, this)) {
 		if (this->spd.y > 0) {
 			this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
 		} else {
@@ -105,6 +97,11 @@ void player_update(Entity* this) {
 	}
 }
 
+struct bullet_data {
+	int timer;
+	int grappled;
+};
+
 void grapple_update(Entity* this) {
 	if (this->data == NULL) {
 		this->data = malloc(sizeof(struct grapple_data));
@@ -123,7 +120,7 @@ void grapple_update(Entity* this) {
 	if (!data->attached) {
 		for (int i = 0; i < 10; i++) {
 			this->pos.x += sub_spd.x;
-			if (is_entity_touching_wall(this) && fabsf(sub_spd.x) > 0) {
+			if (is_entity_touching_wall(objects, this) && fabsf(sub_spd.x) > 0) {
 				if (sub_spd.x > 0) {
 					this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
 					this->rotation = M_PI / 2;
@@ -137,7 +134,7 @@ void grapple_update(Entity* this) {
 			}
 
 			this->pos.y += sub_spd.y;
-			if (is_entity_touching_wall(this) && fabsf(sub_spd.y) > 0) {
+			if (is_entity_touching_wall(objects, this) && fabsf(sub_spd.y) > 0) {
 				if (sub_spd.y > 0) {
 					this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
 					this->rotation = M_PI;
@@ -162,6 +159,9 @@ void grapple_update(Entity* this) {
 	} else if (data->attached_to) {
 		if (is_entity_valid(objects, data->attached_to)) {
 			if (entity_has_flag(data->attached_to, ENTITY_FLAG_BULLET)) {
+				struct bullet_data* b_data = (struct bullet_data*) data->attached_to->data;
+				if (b_data)
+					b_data->grappled = 1;
 				Vector2 player_delta = Vector2Subtract(data->player->pos, this->pos);
 				Vector2 player_delta_normalized = Vector2Normalize(player_delta);
 
@@ -176,15 +176,25 @@ void grapple_update(Entity* this) {
 }
 
 void bullet_update(Entity* this) {
-	this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
-	// Vector2 spd = (Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)};
-	// spd = Vector2Scale(spd, 0.1);
-	// this->pos = Vector2Add(this->pos, spd);
-	this->pos = Vector2Add(this->pos, this->spd);
-	if (is_entity_touching_wall(this)) {
-		init_entity(objects, 5, this->pos.x, this->pos.y, 0);
-		kill_entity(objects, this);
+	if (this->data == NULL) {
+		this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
+		this->data = malloc(sizeof(struct bullet_data));
+		struct bullet_data* data = (struct bullet_data*) this->data;
+		data->timer = 10;
+		data->grappled = 0;
 	}
+
+	struct bullet_data* data = (struct bullet_data*) this->data;
+
+	data->timer--;
+
+	this->pos = Vector2Add(this->pos, this->spd);
+	if ((is_entity_touching_wall(objects, this) || ( entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE) && !data->grappled)) && data->timer <= 0) {
+		init_entity(objects, 5, this->pos.x, this->pos.y, 0);
+		return kill_entity(objects, this); // don't run subsequent assignment
+	}
+
+	data->grappled = 0;
 }
 
 struct turret_data {
@@ -237,7 +247,7 @@ int is_tile_solid(int tile) {
 
 extern Tiled2cMap map;
 
-int is_entity_touching_wall(Entity* thing) {
+int is_entity_touching_wall(Entity_array* objects, Entity* thing) {
 	int left_x = (int) (thing->pos.x + thing->hitbox.x);
 	int top_y = (int) (thing->pos.y + thing->hitbox.y);
 
@@ -251,6 +261,24 @@ int is_entity_touching_wall(Entity* thing) {
 
 			if (is_tile_solid(tile)) {
 				return 1;
+			}
+		}
+	}
+
+	for (int i = 0; i < objects->length; i++) {
+		Entity* obj = objects->array[i];
+		if (thing != obj) {
+			Rectangle h1 = thing->hitbox;
+			Rectangle h2 = obj->hitbox;
+			h1.x += thing->pos.x;
+			h1.y += thing->pos.y;
+
+			h2.x += obj->pos.x;
+			h2.y += obj->pos.y;
+
+			if (h1.x < h2.x + h2.width && h1.x + h1.width > h2.x && h1.y < h2.y + h2.height && h1.y + h1.height > h2.y) {
+				if (entity_has_flag(obj, ENTITY_FLAG_SOLID))
+					return 1;
 			}
 		}
 	}
@@ -279,4 +307,25 @@ Entity* entity_colliding(Entity_array* objects, Entity* thing) {
 
 int entity_has_flag(Entity* thing, short flag) {
 	return entity_flags[thing->type] & flag;
+}
+
+Entity* entity_colliding_with_flag(Entity_array* objects, Entity* thing, short flag) {
+	for (int i = 0; i < objects->length; i++) {
+		Entity* obj = objects->array[i];
+		if (thing != obj) {
+			Rectangle h1 = thing->hitbox;
+			Rectangle h2 = obj->hitbox;
+			h1.x += thing->pos.x;
+			h1.y += thing->pos.y;
+
+			h2.x += obj->pos.x;
+			h2.y += obj->pos.y;
+
+			if (h1.x < h2.x + h2.width && h1.x + h1.width > h2.x && h1.y < h2.y + h2.height && h1.y + h1.height > h2.y) {
+				if (entity_has_flag(obj, flag))
+					return obj;
+			}
+		}
+	}
+	return NULL;
 }
