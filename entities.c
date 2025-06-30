@@ -11,7 +11,8 @@
 #include "mouse.h"
 #include "entities.h"
 
-int is_entity_touching_wall(Entity_array* objects, Entity* thing);
+int is_entity_touching_wall(Entity* thing);
+int is_entity_touching_solid(Entity_array* objects, Entity* thing);
 Entity* entity_colliding(Entity_array* objects, Entity* thing);
 int entity_has_flag(Entity* thing, short flag);
 Entity* entity_colliding_with_flag(Entity_array* objects, Entity* thing, short flag);
@@ -42,7 +43,7 @@ void player_update(Entity* this) {
 	float epsilon = 0.01;
 
 	this->pos.x += this->spd.x;
-	if (is_entity_touching_wall(objects, this)) {
+	if (is_entity_touching_solid(objects, this)) {
 		if (this->spd.x > 0) {
 			this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
 		} else {
@@ -52,7 +53,7 @@ void player_update(Entity* this) {
 	}
 
 	this->pos.y += this->spd.y;
-	if (is_entity_touching_wall(objects, this)) {
+	if (is_entity_touching_solid(objects, this)) {
 		if (this->spd.y > 0) {
 			this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
 		} else {
@@ -99,6 +100,7 @@ void player_update(Entity* this) {
 
 struct bullet_data {
 	int timer;
+	int initial_timer;
 	int grappled;
 };
 
@@ -120,7 +122,7 @@ void grapple_update(Entity* this) {
 	if (!data->attached) {
 		for (int i = 0; i < 10; i++) {
 			this->pos.x += sub_spd.x;
-			if (is_entity_touching_wall(objects, this) && fabsf(sub_spd.x) > 0) {
+			if (is_entity_touching_solid(objects, this) && fabsf(sub_spd.x) > 0) {
 				if (sub_spd.x > 0) {
 					this->pos.x = (int) (this->pos.x + this->hitbox.x + this->hitbox.width) - 1 + this->hitbox.x - epsilon;
 					this->rotation = M_PI / 2;
@@ -134,7 +136,7 @@ void grapple_update(Entity* this) {
 			}
 
 			this->pos.y += sub_spd.y;
-			if (is_entity_touching_wall(objects, this) && fabsf(sub_spd.y) > 0) {
+			if (is_entity_touching_solid(objects, this) && fabsf(sub_spd.y) > 0) {
 				if (sub_spd.y > 0) {
 					this->pos.y = (int) (this->pos.y + this->hitbox.y + this->hitbox.height) - 1 + this->hitbox.y - epsilon;
 					this->rotation = M_PI;
@@ -160,8 +162,10 @@ void grapple_update(Entity* this) {
 		if (is_entity_valid(objects, data->attached_to)) {
 			if (entity_has_flag(data->attached_to, ENTITY_FLAG_BULLET)) {
 				struct bullet_data* b_data = (struct bullet_data*) data->attached_to->data;
-				if (b_data)
+				if (b_data) {
 					b_data->grappled = 1;
+					b_data->timer = 10;
+				}
 				Vector2 player_delta = Vector2Subtract(data->player->pos, this->pos);
 				Vector2 player_delta_normalized = Vector2Normalize(player_delta);
 
@@ -180,16 +184,18 @@ void bullet_update(Entity* this) {
 		this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
 		this->data = malloc(sizeof(struct bullet_data));
 		struct bullet_data* data = (struct bullet_data*) this->data;
-		data->timer = 10;
+		data->initial_timer = 10;
+		data->timer = 0;
 		data->grappled = 0;
 	}
 
 	struct bullet_data* data = (struct bullet_data*) this->data;
 
+	data->initial_timer--;
 	data->timer--;
 
 	this->pos = Vector2Add(this->pos, this->spd);
-	if ((is_entity_touching_wall(objects, this) || ( entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE) && !data->grappled)) && data->timer <= 0) {
+	if ((is_entity_touching_solid(objects, this) || (entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE | ENTITY_FLAG_SOLID) && !data->grappled && data->timer <= 0)) && data->initial_timer <= 0) {
 		init_entity(objects, 5, this->pos.x, this->pos.y, 0);
 		return kill_entity(objects, this); // don't run subsequent assignment
 	}
@@ -247,7 +253,7 @@ int is_tile_solid(int tile) {
 
 extern Tiled2cMap map;
 
-int is_entity_touching_wall(Entity_array* objects, Entity* thing) {
+int is_entity_touching_wall(Entity* thing) {
 	int left_x = (int) (thing->pos.x + thing->hitbox.x);
 	int top_y = (int) (thing->pos.y + thing->hitbox.y);
 
@@ -264,6 +270,12 @@ int is_entity_touching_wall(Entity_array* objects, Entity* thing) {
 			}
 		}
 	}
+	return 0;
+}
+
+int is_entity_touching_solid(Entity_array* objects, Entity* thing) {
+	if (is_entity_touching_wall(thing))
+		return 1;
 
 	for (int i = 0; i < objects->length; i++) {
 		Entity* obj = objects->array[i];
