@@ -1,4 +1,5 @@
 #include "entity.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <raylib.h>
 #include <math.h>
@@ -19,6 +20,8 @@ Entity* entity_colliding_with_flag(Entity_array* objects, Entity* thing, short f
 
 extern Cam camera;
 extern Entity_array* objects;
+
+extern Texture2D tileset;
 
 struct player_data {
 	Entity* grapple;
@@ -89,7 +92,7 @@ void player_update(Entity* this) {
 		}
 
 		// DrawLineEx((Vector2) {(this->pos.x + 0.5) * camera.zoom, (this->pos.y + 0.5) * camera.zoom}, (Vector2) {(data->grapple->pos.x + 0.5) * camera.zoom, (data->grapple->pos.y + 0.5) * camera.zoom}, 0.2 * camera.zoom, P8_DARK_PURPLE);
-		draw_line(Vector2AddValue(this->pos, 0.5), Vector2AddValue(data->grapple->pos, 0.5), 0.2, P8_DARK_PURPLE);
+		draw_line(Vector2AddValue(this->pos, 0.5), Vector2AddValue(data->grapple->pos, 0.5), 0.5, P8_BLUE);
 	} else {
 		if (data->grapple != NULL) {
 			kill_entity(objects, data->grapple);
@@ -224,8 +227,82 @@ void turret_update(Entity* this) {
 	}
 }
 
-void arrow_update(Entity* this) {
+enum mage_states: uint8_t {
+	SHOOTING,
+	WAITING,
+	LIMBO,
+};
 
+// 60f limbo -> 120f waiting -> 20f shooting -> loop
+
+struct mage_data {
+	enum mage_states state;
+	int timer;
+};
+
+void mage_update(Entity* this) {
+	if (this->data == NULL) {
+		this->data = malloc(sizeof(struct mage_data));
+		this->hitbox = (Rectangle) {0, 0, 3, 3};
+
+		struct mage_data* data = (struct mage_data*) this->data;
+		data->state = LIMBO;
+		data->timer = 60;
+	}
+	struct mage_data* data = (struct mage_data*) this->data;
+
+	Vector2 mage_pos_gun = {
+		this->pos.x + (17.0 / 8.0),
+		this->pos.y + (7.0 / 8.0)
+	};
+
+	switch (data->state) {
+		case LIMBO:
+			data->timer--;
+			if (data->timer <= 0) {
+				this->pos.x = rand() % 256 / 8.0; // PLACEHOLDER
+				this->pos.y = rand() % 256 / 8.0; // PLACEHOLDER
+				data->timer = 120;
+				data->state = WAITING;
+			}
+			break;
+		case WAITING:
+			data->timer--;
+			if (data->timer <= 0) {
+				data->timer = 30;
+				data->state = SHOOTING;
+			}
+			break;
+			
+		case SHOOTING:
+			data->timer--;
+			if (data->timer % 5 == 0) {
+				Entity* bullet = init_entity(objects, 2, mage_pos_gun.x, mage_pos_gun.y, 0);
+				Entity* player = get_entity_by_type(objects, 0);
+				float angle_to_player = atan2((player->pos.y + 0.5) - mage_pos_gun.y, (player->pos.x + 0.5) - mage_pos_gun.x);
+				bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.1);
+			}
+			if (data->timer <= 0) {
+				data->timer = 60;
+				data->state = LIMBO;
+			}
+			break;
+		default:
+			printf("what???\n");
+			break;
+	}
+
+	// this->rotation += 0.1;
+}
+
+void mage_draw(Entity* this) {
+	Rectangle sprite_source = {
+		0, 232, 24, 24
+	};
+
+	struct mage_data* data = (struct mage_data*) this->data;
+	if (data->state != LIMBO)
+		draw_texture_rect(tileset, sprite_source, this->pos, this->rotation);
 }
 
 struct explosion_data {

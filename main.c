@@ -1,5 +1,7 @@
 #include <raylib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "bossrush.h"
 
@@ -25,6 +27,7 @@ Cam camera;
 Entity_array* objects;
 
 int main() {
+	srand(time(NULL));
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "boss rush!");
 
 	SetTargetFPS(60);
@@ -92,16 +95,20 @@ int tile_at(int x, int y) {
 }
 
 void draw_tile(Cam cam, int id, int x, int y) {
+	int tile_size = 8;
+	int spritesheet_image_size = 256; // 256x256 at the moment
+	int tiles_per_row = spritesheet_image_size / tile_size;
+
 	id--;
 
 	if (id < 0)
 		return;
 
 	Rectangle src = {
-		.x = (id % 8) * 8,
-		.y = (int) (id / 8) * 8,
-		.width = 8,
-		.height = 8,
+		.x = (id % tiles_per_row) * tile_size,
+		.y = (int) (id / tiles_per_row) * tile_size,
+		.width = tile_size,
+		.height = tile_size,
 	};
 
 	Rectangle dst = {
@@ -114,25 +121,34 @@ void draw_tile(Cam cam, int id, int x, int y) {
 }
 
 void draw_entity(Cam cam, Entity* thing) {
-	Rectangle src = {
-		.x = (thing->type % 8) * 8,
-		.y = (int) (thing->type / 8) * 8,
-		.width = 8,
-		.height = 8,
-	};
+	if (thing->draw) {
+		thing->draw(thing);
+	} else {
+		int tile_size = 8;
+		int spritesheet_image_size = 256; // 256x256 at the moment
+		int tiles_per_row = spritesheet_image_size / tile_size;
 
-	Rectangle dst = {
-		.x = (thing->pos.x - cam.x) * cam.zoom,
-		.y = (thing->pos.y - cam.y) * cam.zoom,
-		.width = cam.zoom,
-		.height = cam.zoom,
-	};
+		Rectangle src = {
+			.x = (thing->type % tiles_per_row) * tile_size,
+			.y = (int) (thing->type / tiles_per_row) * tile_size,
+			.width = tile_size,
+			.height = tile_size,
+		};
 
-	float angle = thing->rotation;
-	float hyp = sqrtf(cam.zoom * cam.zoom + cam.zoom * cam.zoom) / -2;
+		Rectangle dst = {
+			.x = (thing->pos.x - cam.x) * cam.zoom,
+			.y = (thing->pos.y - cam.y) * cam.zoom,
+			.width = cam.zoom,
+			.height = cam.zoom,
+		};
 
-	Vector2 offset = {(+sinf(angle + (M_PI / 4)) - sinf(M_PI / 4)) * hyp, (cosf(angle + (M_PI / 4)) - cosf(M_PI / 4)) * hyp};
-	DrawTexturePro(tileset, src, dst, offset, angle * (180 / M_PI), WHITE);
+		float angle = thing->rotation;
+		float hyp = sqrtf(cam.zoom * cam.zoom + cam.zoom * cam.zoom) / -2;
+
+		Vector2 offset = {(+sinf(angle + (M_PI / 4)) - sinf(M_PI / 4)) * hyp, (cosf(angle + (M_PI / 4)) - cosf(M_PI / 4)) * hyp};
+		DrawTexturePro(tileset, src, dst, offset, angle * (180 / M_PI), WHITE);
+		// DrawTexturePro(tileset, src, dst, (Vector2) {0, 0}, angle * (180 / M_PI), WHITE);
+	}
 }
 
 void draw_hitboxes(Cam cam, Entity_array* objects) {

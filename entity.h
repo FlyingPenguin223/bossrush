@@ -11,6 +11,7 @@ typedef struct Entity {
     Rectangle hitbox;
     void* data;
     void (*update)(struct Entity* this);
+	void (*draw)(struct Entity* this);
 } Entity;
 
 typedef struct Entity_array {

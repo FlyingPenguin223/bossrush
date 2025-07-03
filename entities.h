@@ -2,21 +2,33 @@
 #define ENTITIES_H
 
 #include "entity.h"
+#include <stdio.h>
 
 void player_update(Entity* this);
 void grapple_update(Entity* this);
 void bullet_update(Entity* this);
 void turret_update(Entity* this);
-void arrow_update(Entity* this);
+void mage_update(Entity* this);
 void explosion_update(Entity* this);
 
-static void (*const obj_updates[6]) (Entity*) = {
+static void (*const obj_updates[])(Entity*) = {
 	player_update,
 	grapple_update,
 	bullet_update,
 	turret_update,
-	arrow_update,
+	mage_update,
 	explosion_update,
+};
+
+void mage_draw(Entity *this);
+
+static void (*const obj_draws[])(Entity*) = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	mage_draw,
+	NULL,
 };
 
 #define ENTITY_FLAG_SOLID               ( (short) (0b0000000000000001) )

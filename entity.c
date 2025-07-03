@@ -24,6 +24,7 @@ Entity* init_entity(Entity_array* array, int type, float x, float y, float rotat
     new_entity->hitbox = (Rectangle) {.x = 0, .y = 0, .width = 1, .height = 1};
     new_entity->data = NULL;
     new_entity->update = obj_updates[type];
+    new_entity->draw = obj_draws[type];
 
     if (array->length >= array->capacity) {
         array->capacity *= 2;
