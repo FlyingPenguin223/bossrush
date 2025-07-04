@@ -224,6 +224,7 @@ void bullet_update(Entity* this) {
 		} else
 			kms = true;
 	}
+
 	if (!data->initial_intangibility && ((entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE | ENTITY_FLAG_SOLID) && !data->grappled && data->timer <= 0)))
 		kms = true;
 
