@@ -106,6 +106,7 @@ struct bullet_data {
 	bool initial_intangibility;
 	int grappled;
 	int bounce;
+	bool has_been_grappled;
 };
 
 void grapple_update(Entity* this) {
@@ -169,6 +170,7 @@ void grapple_update(Entity* this) {
 				if (b_data) {
 					b_data->grappled = 1;
 					b_data->timer = 10;
+					b_data->has_been_grappled = true;
 				}
 				Vector2 player_delta = Vector2Subtract(data->player->pos, this->pos);
 				Vector2 player_delta_normalized = Vector2Normalize(player_delta);
@@ -185,18 +187,20 @@ void grapple_update(Entity* this) {
 
 void bullet_update(Entity* this) {
 	if (this->data == NULL) {
-		this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
 		this->data = malloc(sizeof(struct bullet_data));
 		struct bullet_data* data = (struct bullet_data*) this->data;
 		data->initial_intangibility = true;
 		data->timer = 0;
 		data->grappled = 0;
+		data->has_been_grappled = false;
 		return;
 	}
 
 	struct bullet_data* data = this->data;
 
-	if (data->initial_intangibility && !is_entity_touching_solid(objects, this))
+	this->hitbox = data->bounce > 0 ? (Rectangle) {0, 0, 1, 1} : (Rectangle) {0.25, 0.25, 0.5, 0.5};
+
+	if (data->initial_intangibility && !is_entity_touching_solid(objects, this) && !entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE))
 		data->initial_intangibility = false;
 
 	data->timer--;
@@ -221,6 +225,9 @@ void bullet_update(Entity* this) {
 			kms = true;
 	}
 	if (!data->initial_intangibility && ((entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE | ENTITY_FLAG_SOLID) && !data->grappled && data->timer <= 0)))
+		kms = true;
+
+	if (!data->initial_intangibility && data->has_been_grappled && entity_colliding_with_flag(objects, this, ENTITY_FLAG_ENEMY))
 		kms = true;
 
 	if (kms) {
@@ -339,8 +346,10 @@ void mage_update(Entity* this) {
 				auto bdata = (struct bullet_data*)bullet->data;
 				bdata->bounce = 1;
 				Entity* player = get_entity_by_type(objects, 0);
-				float angle_to_player = atan2((player->pos.y + 0.5) - mage_pos_gun.y, (player->pos.x + 0.5) - mage_pos_gun.x);
-				bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.25);
+				if (player) {
+					float angle_to_player = atan2((player->pos.y + 0.5) - mage_pos_gun.y, (player->pos.x + 0.5) - mage_pos_gun.x);
+					bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.25);
+				}
 			}
 			if (data->timer <= 0) {
 				data->timer = 60;
@@ -455,7 +464,9 @@ Entity* entity_colliding(Entity_array* objects, Entity* thing) {
 }
 
 int entity_has_flag(Entity* thing, short flag) {
-	return entity_flags[thing->type] & flag;
+	if (thing)
+		return entity_flags[thing->type] & flag;
+	return 0;
 }
 
 Entity* entity_colliding_with_flag(Entity_array* objects, Entity* thing, short flag) {

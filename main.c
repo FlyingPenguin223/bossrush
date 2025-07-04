@@ -49,17 +49,19 @@ int main() {
 	while (!WindowShouldClose()) {
 
 		Entity* player = get_entity_by_type(objects, 0);
-		
-		float num_tiles_across = WINDOW_WIDTH / camera.zoom;
-		float num_tiles_down = WINDOW_HEIGHT / camera.zoom;
+		if (player != NULL) {
 
-		float cam_ideal_x = player->pos.x - num_tiles_across / 2;
-		float cam_ideal_y = player->pos.y - num_tiles_down / 2;
+			float num_tiles_across = WINDOW_WIDTH / camera.zoom;
+			float num_tiles_down = WINDOW_HEIGHT / camera.zoom;
 
-		float smoothness = 10;
+			float cam_ideal_x = player->pos.x - num_tiles_across / 2;
+			float cam_ideal_y = player->pos.y - num_tiles_down / 2;
 
-		camera.x = ((camera.x * smoothness) + cam_ideal_x) / (smoothness + 1);
-		camera.y = ((camera.y * smoothness) + cam_ideal_y) / (smoothness + 1);
+			float smoothness = 10;
+
+			camera.x = ((camera.x * smoothness) + cam_ideal_x) / (smoothness + 1);
+			camera.y = ((camera.y * smoothness) + cam_ideal_y) / (smoothness + 1);
+		}
 
 		BeginDrawing();
 		ClearBackground(BLACK);
@@ -76,7 +78,7 @@ int main() {
 			draw_entity(camera, thing);
 		}
 
-		draw_hitboxes(camera, objects);
+		// draw_hitboxes(camera, objects);
 
 		EndDrawing();
 	}
