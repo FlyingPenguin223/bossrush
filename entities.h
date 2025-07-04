@@ -7,6 +7,7 @@
 void player_update(Entity* this);
 void grapple_update(Entity* this);
 void bullet_update(Entity* this);
+void bullet_draw(Entity* this);
 void turret_update(Entity* this);
 void mage_update(Entity* this);
 void explosion_update(Entity* this);
@@ -25,7 +26,7 @@ void mage_draw(Entity *this);
 static void (*const obj_draws[])(Entity*) = {
 	NULL,
 	NULL,
-	NULL,
+	bullet_draw,
 	NULL,
 	mage_draw,
 	NULL,

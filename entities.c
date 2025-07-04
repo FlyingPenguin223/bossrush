@@ -103,8 +103,9 @@ void player_update(Entity* this) {
 
 struct bullet_data {
 	int timer;
-	int initial_timer;
+	bool initial_intangibility;
 	int grappled;
+	int bounce;
 };
 
 void grapple_update(Entity* this) {
@@ -187,23 +188,75 @@ void bullet_update(Entity* this) {
 		this->hitbox = (Rectangle) {0.25, 0.25, 0.5, 0.5};
 		this->data = malloc(sizeof(struct bullet_data));
 		struct bullet_data* data = (struct bullet_data*) this->data;
-		data->initial_timer = 10;
+		data->initial_intangibility = true;
 		data->timer = 0;
 		data->grappled = 0;
+		return;
 	}
 
-	struct bullet_data* data = (struct bullet_data*) this->data;
+	struct bullet_data* data = this->data;
 
-	data->initial_timer--;
+	if (data->initial_intangibility && !is_entity_touching_solid(objects, this))
+		data->initial_intangibility = false;
+
 	data->timer--;
 
-	this->pos = Vector2Add(this->pos, this->spd);
-	if ((is_entity_touching_solid(objects, this) || (entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE | ENTITY_FLAG_SOLID) && !data->grappled && data->timer <= 0)) && data->initial_timer <= 0) {
-		init_entity(objects, 5, this->pos.x, this->pos.y, 0);
-		return kill_entity(objects, this); // don't run subsequent assignment
+	bool kms = false;
+	this->pos.x += this->spd.x;
+	if (!data->initial_intangibility && is_entity_touching_solid(objects, this)) {
+		if (data->bounce > 0) {
+			data->bounce -= 1;
+			this->pos.x -= this->spd.x;
+			this->spd.x *= -1;
+		} else
+			kms = true;
+	}
+	this->pos.y += this->spd.y;
+	if (!data->initial_intangibility && is_entity_touching_solid(objects, this)) {
+		if (data->bounce > 0) {
+			data->bounce -= 1;
+			this->pos.y -= this->spd.y;
+			this->spd.y *= -1;
+		} else
+			kms = true;
+	}
+	if (!data->initial_intangibility && ((entity_colliding_with_flag(objects, this, ENTITY_FLAG_BULLET_COLLIDABLE | ENTITY_FLAG_SOLID) && !data->grappled && data->timer <= 0)))
+		kms = true;
+
+	if (kms) {
+			init_entity(objects, 5, this->pos.x, this->pos.y, 0);
+			return kill_entity(objects, this);
 	}
 
 	data->grappled = 0;
+}
+
+void bullet_draw(Entity *this) {
+	struct bullet_data* data = this->data;
+	int tile_size = 8;
+	int spritesheet_image_size = 256; // 256x256 at the moment
+	int tiles_per_row = spritesheet_image_size / tile_size;
+
+	Rectangle src = {
+		.x = (this->type % tiles_per_row) * tile_size,
+		.y = (int) (this->type / tiles_per_row) * tile_size,
+		.width = tile_size,
+		.height = tile_size,
+	};
+
+	Rectangle dst = {
+		.x = (this->pos.x - camera.x) * camera.zoom,
+		.y = (this->pos.y - camera.y) * camera.zoom,
+		.width = (data->bounce ? 2 : 1) * camera.zoom,
+		.height = (data->bounce ? 2 : 1) * camera.zoom,
+	};
+
+	float angle = this->rotation;
+	float hyp = sqrtf(camera.zoom * camera.zoom + camera.zoom * camera.zoom) / -2;
+
+	Vector2 offset = {(+sinf(angle + (M_PI / 4)) - sinf(M_PI / 4)) * hyp, (cosf(angle + (M_PI / 4)) - cosf(M_PI / 4)) * hyp};
+	DrawTexturePro(tileset, src, dst, offset, angle * (180 / M_PI), WHITE);
+	// DrawTexturePro(tileset, src, dst, (Vector2) {0, 0}, angle * (180 / M_PI), WHITE);
 }
 
 struct turret_data {
@@ -223,6 +276,7 @@ void turret_update(Entity* this) {
 	if (data->timer >= 30) {
 		data->timer = 0;
 		Entity* bullet = init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
+		bullet_update(bullet);
 		bullet->spd = Vector2Scale((Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)}, 0.1);
 	}
 }
@@ -281,6 +335,9 @@ void mage_update(Entity* this) {
 			data->timer--;
 			if (data->timer % 5 == 0) {
 				Entity* bullet = init_entity(objects, 2, mage_pos_gun.x, mage_pos_gun.y, 0);
+				bullet_update(bullet);
+				auto bdata = (struct bullet_data*)bullet->data;
+				bdata->bounce = 1;
 				Entity* player = get_entity_by_type(objects, 0);
 				float angle_to_player = atan2((player->pos.y + 0.5) - mage_pos_gun.y, (player->pos.x + 0.5) - mage_pos_gun.x);
 				bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.25);
