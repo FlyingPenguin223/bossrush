@@ -245,8 +245,8 @@ void bullet_draw(Entity *this) {
 	};
 
 	Rectangle dst = {
-		.x = (this->pos.x - camera.x) * camera.zoom,
-		.y = (this->pos.y - camera.y) * camera.zoom,
+		.x = (this->pos.x - camera.x - (data->bounce ? 0.5 : 0)) * camera.zoom,
+		.y = (this->pos.y - camera.y - (data->bounce ? 0.5 : 0)) * camera.zoom,
 		.width = (data->bounce ? 2 : 1) * camera.zoom,
 		.height = (data->bounce ? 2 : 1) * camera.zoom,
 	};
@@ -304,7 +304,7 @@ void mage_update(Entity* this) {
 		data->state = LIMBO;
 		data->timer = 60;
 
-		data->valid_locations = (Rectangle) {this->pos.x - 12, this->pos.y - 11, 24, 16};
+		data->valid_locations = (Rectangle) {this->pos.x - 12, this->pos.y - 9, 24, 16};
 	}
 	struct mage_data* data = (struct mage_data*) this->data;
 
