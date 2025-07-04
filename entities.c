@@ -236,6 +236,7 @@ enum mage_states: uint8_t {
 // 60f limbo -> 120f waiting -> 20f shooting -> loop
 
 struct mage_data {
+	Rectangle valid_locations;
 	enum mage_states state;
 	int timer;
 };
@@ -248,6 +249,8 @@ void mage_update(Entity* this) {
 		struct mage_data* data = (struct mage_data*) this->data;
 		data->state = LIMBO;
 		data->timer = 60;
+
+		data->valid_locations = (Rectangle) {this->pos.x - 12, this->pos.y - 11, 24, 16};
 	}
 	struct mage_data* data = (struct mage_data*) this->data;
 
@@ -260,8 +263,8 @@ void mage_update(Entity* this) {
 		case LIMBO:
 			data->timer--;
 			if (data->timer <= 0) {
-				this->pos.x = rand() % 256 / 8.0; // PLACEHOLDER
-				this->pos.y = rand() % 256 / 8.0; // PLACEHOLDER
+				this->pos.x = (rand() % (int)data->valid_locations.width) + data->valid_locations.x;
+				this->pos.y = (rand() % (int)data->valid_locations.height) + data->valid_locations.y;
 				data->timer = 120;
 				data->state = WAITING;
 			}
@@ -280,7 +283,7 @@ void mage_update(Entity* this) {
 				Entity* bullet = init_entity(objects, 2, mage_pos_gun.x, mage_pos_gun.y, 0);
 				Entity* player = get_entity_by_type(objects, 0);
 				float angle_to_player = atan2((player->pos.y + 0.5) - mage_pos_gun.y, (player->pos.x + 0.5) - mage_pos_gun.x);
-				bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.1);
+				bullet->spd = Vector2Scale((Vector2) {cos(angle_to_player), sin(angle_to_player)}, 0.25);
 			}
 			if (data->timer <= 0) {
 				data->timer = 60;
