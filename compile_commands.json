@@ -4,7 +4,11 @@
       "/usr/bin/gcc",
       "-c",
       "-O3",
+      "-g3",
       "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-I.",
       "-o",
       "builds/mouse.o",
       "mouse.c"
@@ -18,7 +22,11 @@
       "/usr/bin/gcc",
       "-c",
       "-O3",
+      "-g3",
       "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-I.",
       "-o",
       "builds/main.o",
       "main.c"
@@ -32,7 +40,29 @@
       "/usr/bin/gcc",
       "-c",
       "-O3",
+      "-g3",
       "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-I.",
+      "-o",
+      "builds/entity.o",
+      "entity.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/entity.c",
+    "output": "/home/rexifer/projects/bossrush/builds/entity.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-O3",
+      "-g3",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-I.",
       "-o",
       "builds/entities.o",
       "entities.c"
@@ -40,5 +70,23 @@
     "directory": "/home/rexifer/projects/bossrush",
     "file": "/home/rexifer/projects/bossrush/entities.c",
     "output": "/home/rexifer/projects/bossrush/builds/entities.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-O3",
+      "-g3",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-I.",
+      "-o",
+      "builds/map.o",
+      "builds/map.c"
+    ],
+    "directory": "/home/rexifer/projects/bossrush",
+    "file": "/home/rexifer/projects/bossrush/builds/map.c",
+    "output": "/home/rexifer/projects/bossrush/builds/map.o"
   }
 ]

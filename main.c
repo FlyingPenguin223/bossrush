@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -26,6 +27,12 @@ Vector2 get_mouse_pos_scaled();
 Cam camera;
 Entity_array* objects;
 
+struct player_data {
+	Entity* grapple;
+	int health;
+	int invulnerable_frames;
+};
+
 int main() {
 	srand(time(NULL));
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "boss rush!");
@@ -49,6 +56,8 @@ int main() {
 	while (!WindowShouldClose()) {
 
 		Entity* player = get_entity_by_type(objects, 0);
+		struct player_data* p_data = (struct player_data*) player->data;
+
 		if (player != NULL) {
 
 			float num_tiles_across = WINDOW_WIDTH / camera.zoom;
@@ -76,6 +85,12 @@ int main() {
 			Entity* thing = get_entity(objects, i);
 			thing->update(thing);
 			draw_entity(camera, thing);
+		}
+
+		if (p_data) {
+			char hud_string[11];
+			snprintf(hud_string, 11, "health: %d", p_data->health);
+			DrawText(hud_string, 0, 0, 20, WHITE);
 		}
 
 		// draw_hitboxes(camera, objects);

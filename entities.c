@@ -25,6 +25,8 @@ extern Texture2D tileset;
 
 struct player_data {
 	Entity* grapple;
+	int health;
+	int invulnerable_frames;
 };
 
 struct grapple_data {
@@ -39,6 +41,9 @@ void player_update(Entity* this) {
 	if (this->data == NULL) {
 		this->data = malloc(sizeof(struct player_data));
 		this->hitbox = (Rectangle) {0.125, 0.125, 0.75, 0.75};
+		struct player_data* data = (struct player_data*) (this->data);
+		data->health = 10;
+		data->invulnerable_frames = 0;
 	}
 
 	struct player_data* data = (struct player_data*) (this->data);
@@ -63,6 +68,15 @@ void player_update(Entity* this) {
 			this->pos.y = (int) (this->pos.y + this->hitbox.y) + 1 - this->hitbox.y + epsilon;
 		}
 		this->spd.y *= -0.8;
+	}
+
+	data->invulnerable_frames--;
+	if (data->invulnerable_frames < 0)
+		data->invulnerable_frames = 0;
+
+	if (entity_colliding_with_flag(objects, this, ENTITY_FLAG_HURTS) && data->invulnerable_frames == 0) {
+		data->health -= 1;
+		data->invulnerable_frames = 60;
 	}
 
 	Vector2 mouse_pos = get_mouse_position();
@@ -99,6 +113,22 @@ void player_update(Entity* this) {
 			data->grapple = NULL;
 		}
 	}
+}
+
+void player_draw(Entity* this) {
+	struct player_data* data = (struct player_data*) (this->data);
+
+	Rectangle src = {
+		0, 0, 8, 8
+	};
+
+	Rectangle dst = {
+		this->pos.x, this->pos.y,
+		1, 1
+	};
+
+	if (data->invulnerable_frames % 4 == 0)
+		draw_texture_rect(tileset, src, dst, this->rotation);
 }
 
 struct bullet_data {
@@ -241,30 +271,20 @@ void bullet_update(Entity* this) {
 
 void bullet_draw(Entity *this) {
 	struct bullet_data* data = this->data;
-	int tile_size = 8;
-	int spritesheet_image_size = 256; // 256x256 at the moment
-	int tiles_per_row = spritesheet_image_size / tile_size;
-
 	Rectangle src = {
-		.x = (this->type % tiles_per_row) * tile_size,
-		.y = (int) (this->type / tiles_per_row) * tile_size,
-		.width = tile_size,
-		.height = tile_size,
+		16, 0, 8, 8,
 	};
+
+	float offset = data->bounce > 0 ? 1 : 0;
 
 	Rectangle dst = {
-		.x = (this->pos.x - camera.x - (data->bounce ? 0.5 : 0)) * camera.zoom,
-		.y = (this->pos.y - camera.y - (data->bounce ? 0.5 : 0)) * camera.zoom,
-		.width = (data->bounce ? 2 : 1) * camera.zoom,
-		.height = (data->bounce ? 2 : 1) * camera.zoom,
+		this->pos.x - offset / 2,
+		this->pos.y - offset / 2,
+		1 + offset,
+		1 + offset,
 	};
 
-	float angle = this->rotation;
-	float hyp = sqrtf(camera.zoom * camera.zoom + camera.zoom * camera.zoom) / -2;
-
-	Vector2 offset = {(+sinf(angle + (M_PI / 4)) - sinf(M_PI / 4)) * hyp, (cosf(angle + (M_PI / 4)) - cosf(M_PI / 4)) * hyp};
-	DrawTexturePro(tileset, src, dst, offset, angle * (180 / M_PI), WHITE);
-	// DrawTexturePro(tileset, src, dst, (Vector2) {0, 0}, angle * (180 / M_PI), WHITE);
+	draw_texture_rect(tileset, src, dst, 0);
 }
 
 struct turret_data {
@@ -370,9 +390,16 @@ void mage_draw(Entity* this) {
 		0, 232, 24, 24
 	};
 
+	Rectangle dst = {
+		this->pos.x,
+		this->pos.y,
+		3,
+		3,
+	};
+
 	struct mage_data* data = (struct mage_data*) this->data;
 	if (data->state != LIMBO)
-		draw_texture_rect(tileset, sprite_source, this->pos, this->rotation);
+		draw_texture_rect(tileset, sprite_source, dst, this->rotation);
 }
 
 struct explosion_data {
