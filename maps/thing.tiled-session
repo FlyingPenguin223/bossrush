@@ -10,16 +10,16 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "map.tmj": {
-            "scale": 5.7286,
+            "scale": 3.5683,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 196.64490451419192,
-                "y": 137.03173550256608
+                "x": 296.35961101925284,
+                "y": 729.759269119749
             }
         },
         "tileset.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 3.7653,
+            "scaleInDock": 4.6449,
             "scaleInEditor": 13.11
         }
     },
