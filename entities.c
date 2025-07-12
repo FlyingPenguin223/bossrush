@@ -90,7 +90,7 @@ void player_update(Entity* this) {
 
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 		if (data->grapple == NULL) {
-			data->grapple = init_entity(objects, 1, this->pos.x, this->pos.y, this->rotation);
+			data->grapple = init_entity(objects, ENTITY_GRAPPLE, this->pos.x, this->pos.y, this->rotation);
 			data->grapple->spd = Vector2Scale(mouse_delta_normalized, 1.5);
 		}
 
@@ -262,7 +262,7 @@ void bullet_update(Entity* this) {
 		kms = true;
 
 	if (kms) {
-			init_entity(objects, 5, this->pos.x, this->pos.y, 0);
+			init_entity(objects, ENTITY_EXPLOSION, this->pos.x, this->pos.y, 0);
 			return kill_entity(objects, this);
 	}
 
@@ -303,7 +303,7 @@ void turret_update(Entity* this) {
 	data->timer++;
 	if (data->timer >= 30) {
 		data->timer = 0;
-		Entity* bullet = init_entity(objects, 2, this->pos.x, this->pos.y, this->rotation);
+		Entity* bullet = init_entity(objects, ENTITY_BULLET, this->pos.x, this->pos.y, this->rotation);
 		bullet_update(bullet);
 		bullet->spd = Vector2Scale((Vector2) {cos(this->rotation - M_PI / 2), sin(this->rotation - M_PI / 2)}, 0.1);
 	}
@@ -321,6 +321,8 @@ struct mage_data {
 	Rectangle valid_locations;
 	enum mage_states state;
 	int timer;
+	int health;
+	int invulnerable_frames;
 };
 
 void mage_update(Entity* this) {
@@ -331,6 +333,8 @@ void mage_update(Entity* this) {
 		struct mage_data* data = (struct mage_data*) this->data;
 		data->state = LIMBO;
 		data->timer = 60;
+		data->health = 2;
+		data->invulnerable_frames = 0;
 
 		data->valid_locations = (Rectangle) {this->pos.x - 12, this->pos.y - 9, 24, 16};
 	}
@@ -341,8 +345,23 @@ void mage_update(Entity* this) {
 		this->pos.y + (7.0 / 8.0)
 	};
 
+	if (entity_colliding_with_flag(objects, this, ENTITY_FLAG_HURTS) && data->invulnerable_frames < 1) {
+		data->health--;
+		data->invulnerable_frames = 120;
+	}
+
+	if (data->invulnerable_frames > 0)
+		data->invulnerable_frames--;
+
+	if (data->health < 1) {
+		init_entity(objects, ENTITY_EXPLOSION, this->pos.x + 1.5, this->pos.y + 1.5, 0);
+		return kill_entity(objects, this);
+	}
+
 	switch (data->state) {
 		case LIMBO:
+			this->pos.x = -2378; // surely
+			this->pos.y = -2378;
 			data->timer--;
 			if (data->timer <= 0) {
 				this->pos.x = (rand() % (int)data->valid_locations.width) + data->valid_locations.x;
@@ -362,7 +381,7 @@ void mage_update(Entity* this) {
 		case SHOOTING:
 			data->timer--;
 			if (data->timer % 5 == 0) {
-				Entity* bullet = init_entity(objects, 2, mage_pos_gun.x, mage_pos_gun.y, 0);
+				Entity* bullet = init_entity(objects, ENTITY_BULLET, mage_pos_gun.x, mage_pos_gun.y, 0);
 				bullet_update(bullet);
 				auto bdata = (struct bullet_data*)bullet->data;
 				bdata->bounce = 1;
@@ -398,7 +417,7 @@ void mage_draw(Entity* this) {
 	};
 
 	struct mage_data* data = (struct mage_data*) this->data;
-	if (data->state != LIMBO)
+	if (data->state != LIMBO && data->invulnerable_frames % 4 == 0)
 		draw_texture_rect(tileset, sprite_source, dst, this->rotation);
 }
 

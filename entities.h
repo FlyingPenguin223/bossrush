@@ -11,6 +11,13 @@ void turret_update(Entity* this);
 void mage_update(Entity* this);
 void explosion_update(Entity* this);
 
+#define ENTITY_PLAYER 0
+#define ENTITY_GRAPPLE 1
+#define ENTITY_BULLET 2
+#define ENTITY_TURRET 3
+#define ENTITY_MAGE 4
+#define ENTITY_EXPLOSION 5
+
 static void (*const obj_updates[])(Entity*) = {
 	player_update,
 	grapple_update,
@@ -33,6 +40,7 @@ static void (*const obj_draws[])(Entity*) = {
 	NULL,
 };
 
+#define ENTITY_FLAG_NONE                0
 #define ENTITY_FLAG_SOLID               ( (short) (0b0000000000000001) )
 #define ENTITY_FLAG_BULLET              ( (short) (0b0000000000000010) )
 #define ENTITY_FLAG_BULLET_COLLIDABLE   ( (short) (0b0000000000000100) )
@@ -41,11 +49,11 @@ static void (*const obj_draws[])(Entity*) = {
 
 static const short entity_flags[] = {
 	ENTITY_FLAG_BULLET_COLLIDABLE,
-	0,
+	ENTITY_FLAG_NONE,
 	ENTITY_FLAG_BULLET,
 	ENTITY_FLAG_SOLID,
 	ENTITY_FLAG_ENEMY,
 	ENTITY_FLAG_HURTS,
-}; // from entities.h, can't include due to pragma once fail?
+};
 
 #endif
